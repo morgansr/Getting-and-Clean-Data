@@ -1,43 +1,50 @@
-run_analysis <- function() {
-    
-    ## Merge the training and the test sets to create one data set.
-    print('Loading test data...')
-    x_test <- read.table("test/X_test.txt", nrows = 3000)
-    print('Loading training data...')
-    x_train <- read.table("train/X_train.txt", nrows = 7500)
-    all_xs <- rbind(x_test, x_train)
-    
-    ## Extracts only the measurements on the mean and standard deviation for each measurement.
-    # Find features with mean() or std() in the column name. Extract those columns from all_xs
-    feats <- read.table("features.txt")
-    stds <- grep("std()", feats$V2, fixed = TRUE)
-    means <- grep("mean()", feats$V2, fixed = TRUE)
-    means_and_stds <- sort(union(stds, means))
-    data_set <- all_xs[means_and_stds]
-    
-    ## Uses descriptive activity names to name the activities in the data set
-    # Bring in y_test and y_train, then replace numbers with names from "activity_labels.txt"
-    
-    act_lab <- read.table("activity_labels.txt")
-    
-    y_test <- read.table("test/y_test.txt", nrows = 3000)
-    y_train <- read.table("train/y_train.txt")
-    all_ys <- rbind(y_test, y_train)
-    
-    sub_test <- read.table("test/subject_test.txt", nrows = 3000, col.names = "subjectID")
-    sub_train <- read.table("train/subject_train.txt", nrows = 7500, col.names = "subjectID")
-    all_subs <- rbind(sub_test, sub_train)
-        
-    ## Appropriately labels the data set with descriptive variable names. 
-    #  Subset the list of features, and apply them as column names
-    colnames(data_set) <- feats$V2[means_and_stds]
-    data_set$activityLabel <- act_lab[all_ys$V1, 2]
-    data_set$subjectID <- all_subs$subjectID
-    
-    str(data_set)
-    
-    ## From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+## Getting and cleaning data course project
+## Script to create a tidy data set from the data available  at 
+## https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip 
+
+## Data is assumed to be in the working directory
+
+# Load the test and train data sets, the ys (integer codes for activities), the subject labels, the activity labels, and the variable names
+print('Loading data...')
+x_test <- read.table("UCI HAR Dataset/test/X_test.txt", nrows = 3000)
+x_train <- read.table("UCI HAR Dataset/train/X_train.txt", nrows = 7500)
+y_test <- read.table("UCI HAR Dataset/test/y_test.txt", nrows = 3000)
+y_train <- read.table("UCI HAR Dataset/train/y_train.txt", nrows = 7500)
+sub_test <- read.table("UCI HAR Dataset/test/subject_test.txt", nrows = 3000, col.names = "subject")
+sub_train <- read.table("UCI HAR Dataset/train/subject_train.txt", nrows = 7500, col.names = "subject")
+act_lab <- read.table("UCI HAR Dataset/activity_labels.txt")
+feats <- read.table("UCI HAR Dataset/features.txt")
+
+# Combine the test and train data into a single data set
+print('Cleaning data...')
+all_xs <- rbind(x_test, x_train)
+all_ys <- rbind(y_test, y_train)
+all_subs <- rbind(sub_test, sub_train)
+
+# Extract just the measurements of standard deviation and mean
+stds <- grep("std()", feats$V2, fixed = TRUE)
+means <- grep("mean()", feats$V2, fixed = TRUE)
+means_and_stds <- sort(union(stds, means))
+data_set <- all_xs[means_and_stds]
+
+# Apply the variable names to the data set
+colnames(data_set) <- feats$V2[means_and_stds]
+
+# Use descriptive activity names from activity labels to name the activities in the data set
+data_set$activity <- act_lab[all_ys$V1, 2]
+data_set$subject <- all_subs$subject
+
+# Write to file
+print('Writing data...')
+write.table(data_set, file = "UCI_HAR_tidy.txt", row.name=FALSE )
+
+# Create a second tidy data set with the average of each variable for each activity and each subject
+print('Creating and writing second data set...')
+tidy_set <- data.frame(cbind(colnames(dataset[1:66]),
+    sapply(split(dataset[1:66],dataset$activity),colMeans),
+    sapply(split(dataset[1:66],dataset$subject),colMeans)))
+colnames(tidy_set)[1] <- "Measurement"
+write.table(tidy_set, file = "UCI_HAR_averages_tidy.txt", row.name=FALSE )
 
 
-    data_set
-}
+
