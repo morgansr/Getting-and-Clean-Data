@@ -40,10 +40,12 @@ write.table(data_set, file = "UCI_HAR_tidy.txt", row.name=FALSE )
 
 # Create a second tidy data set with the average of each variable for each activity and each subject
 print('Creating and writing second data set...')
-tidy_set <- data.frame(cbind(colnames(dataset[1:66]),
-    sapply(split(dataset[1:66],dataset$activity),colMeans),
-    sapply(split(dataset[1:66],dataset$subject),colMeans)))
-colnames(tidy_set)[1] <- "Measurement"
+tidy_set <- data.frame(
+    cbind(
+        colnames(data_set[1:66]),
+        sapply(split(data_set[1:66],data_set[,c('subject', 'activity')]),colMeans)
+    )
+)
 write.table(tidy_set, file = "UCI_HAR_averages_tidy.txt", row.name=FALSE )
 
 
